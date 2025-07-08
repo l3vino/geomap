@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Mappa Swisstopo con Evidenziamento Marker e Clustering</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <style>
+    body{
+      margin: 0;
+    }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+    }
+
+    table td {
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+    }
+
+    table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    table tr:hover {
+      background-color: #ddd;
+    }
+
+    table a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    table a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    const markers = [
+      { x: 46.1711, y: 8.7932, description: 'Edificio 1' },
+      { x: 46.175, y: 8.8, description: 'Edificio 2' },
+      { x: 46.18, y: 8.79, description: 'Edificio 3' },
+      { x:46.191355, y:9.013880, description: "business center"}
+      // Add more markers if needed
+    ];
+
+    let mapInstance = null;
+    let markerClusterGroup = null;
+    let highlightedMarker = null;
+    let constructionLayer = null;
+
+    const defaultIcon = L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      shadowSize: [41, 41]
+    });
+
+    const highlightIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      shadowSize: [41, 41]
+    });
+
+    function flyTo(x, y, zoom, functionCalled = false) {
+      if (mapInstance) {
+        const currentCenter = mapInstance.getCenter();
+        const currentZoom = mapInstance.getZoom();
+
+        const earthRadiusKm = 6371;
+
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+          const toRad = deg => deg * Math.PI / 180;
+          const dLat = toRad(lat2 - lat1);
+          const dLon = toRad(lon2 - lon1);
+
+          const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) ** 2;
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+          return earthRadiusKm * c;
+        }
+
+        const distance2D = haversineDistance(currentCenter.lat, currentCenter.lng, x, y);
+        const zoomScaleKm = 500;
+        const zoomDiffKm = Math.abs(currentZoom - zoom) * zoomScaleKm;
+
+        const totalDistanceKm = Math.sqrt(distance2D ** 2 + zoomDiffKm ** 2);
+
+        const speedKmH = 10000;
+        const durationHours = totalDistanceKm / speedKmH;
+        const durationSeconds = Math.min(Math.max(durationHours * 3600, 1.5), 4.5);
+
+        // Disable construction layer before flyTo
+        if (constructionLayer) {
+          mapInstance.removeLayer(constructionLayer);
+        }
+
+        mapInstance.flyTo([x, y], zoom, { duration: durationSeconds });
+
+        // Re-enable construction layer after fly animation ends
+        function onMoveEnd() {
+          if (constructionLayer) {
+            constructionLayer.addTo(mapInstance);
+          }
+          mapInstance.off('moveend', onMoveEnd);
+        }
+        mapInstance.on('moveend', onMoveEnd);
+
+        // Highlight marker only if functionCalled === true
+        if (functionCalled) {
+          const markerToHighlight = markers.find(m => m.x === x && m.y === y);
+
+          if (markerToHighlight) {
+            if (highlightedMarker) {
+              highlightedMarker.setIcon(defaultIcon);
+            }
+            markerToHighlight.leafletMarker.setIcon(highlightIcon);
+            highlightedMarker = markerToHighlight.leafletMarker;
+          }
+        }
+      }
+    }
+
+    function loadMap(centerX, centerY, zoomLevel) {
+      if (mapInstance === null) {
+        mapInstance = L.map('map', { zoomControl: false }).setView([46.191355, 9.013880], 1);
+
+        L.tileLayer(
+          'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg',
+          {
+            attribution: '&copy; <a href="https://www.swisstopo.admin.ch/en/home.html">swisstopo</a>',
+            maxZoom: 20,
+          }
+        ).addTo(mapInstance);
+
+        constructionLayer = L.tileLayer.wms('https://wms.geo.admin.ch/', {
+          layers: 'ch.bfs.gebaeude_wohnungs_register',
+          format: 'image/png',
+          transparent: true,
+          attribution: '&copy; <a href="https://www.swisstopo.admin.ch/en/home.html">swisstopo</a>',
+          maxZoom: 20,
+          version: '1.3.0',
+        }).addTo(mapInstance);
+
+        markerClusterGroup = L.markerClusterGroup();
+        mapInstance.addLayer(markerClusterGroup);
+
+        markers.forEach(markerData => {
+          const marker = L.marker([markerData.x, markerData.y], { icon: defaultIcon });
+          marker.bindPopup(`<strong>${markerData.description}</strong>`);
+          markerClusterGroup.addLayer(marker);
+          markerData.leafletMarker = marker;
+
+          // Add double-click event to call flyTo with functionCalled = false
+          marker.on('dblclick', () => {
+            flyTo(markerData.x, markerData.y, 18, false);
+          });
+        });
+
+        mapInstance.on('click', function (e) {
+          if(mapInstance.getZoom()<18){return}
+          const url = getFeatureInfoUrl(e.latlng, mapInstance);
+
+          fetch(url)
+            .then(response => {
+              if (!response.ok) throw new Error('Network response not ok');
+              return response.json();
+            })
+            .then(data => {
+              if (data.features && data.features.length > 0) {
+                flyTo(e.latlng.lat, e.latlng.lng, 18, false);
+                const props = data.features[0].properties;
+                const link = `https://api3.geo.admin.ch/rest/services/ech/MapServer/ch.bfs.gebaeude_wohnungs_register/${props.egid}_0/extendedHtmlPopup?lang=it`;
+
+                getInfoFromPopup(props.egid + "_0").then(info => {
+                  let dataPubblicazione = props.gexpdat?.split(' ')[0] ?? 'N/A';
+                  if (dataPubblicazione !== 'N/A') {
+                    const [y, m, d] = dataPubblicazione.split("-");
+                    dataPubblicazione = `${d}.${m}.${y}`;
+                  }
+                  const content = `
+                  <strong>Informazione oggetto</strong><br>
+                  <table>
+                    <tr><td>Identificatore federale edificio (EGID)</td><td>${props.egid ?? 'N/A'}</td></tr>
+                    <tr><td>Via</td><td>${props.strname_deinr ?? 'N/A'}</td></tr>
+                    <tr><td>NPA/NPA6</td><td>${props.plz_plz6 ?? 'N/A'}</td></tr>
+                    <tr><td>Località</td><td>${props.dplzname ?? 'N/A'}</td></tr>
+                    <tr><td>Nome Comune</td><td>${props.ggdename ?? 'N/A'}</td></tr>
+                    <tr><td>Numero UST Comune</td><td>${props.ggdenr ?? 'N/A'}</td></tr>
+                    <tr><td>Data pubblicazione</td><td>${dataPubblicazione}</td></tr>
+                    <tr><td>Numero del fondo</td><td>${info?.numeroFondo ?? 'N/A'}</td></tr>
+                    <tr><td>Stato dell'edificio</td><td>${info?.statoEdificio ?? 'N/A'}</td></tr>
+                    <tr><td>Categoria di edificio</td><td>${info?.categoriaEdificio ?? 'N/A'}</td></tr>
+                    <tr><td>Numero di abitazioni</td><td>${info?.numeroAbitazioni ?? 'N/A'}</td></tr>
+                    <tr><td><a href="${link}" target="_blank">Informazioni supplementari</a></td><td><a href="#" onclick="openGoogleMaps(${e.latlng.lat}, ${e.latlng.lng}); return false;">Vedi su Google Maps</a></td></tr>
+                  </table>
+                  `;
+                  L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent(content)
+                    .openOn(mapInstance);
+                });
+              }
+            })
+            .catch(error => {
+              console.error(error);
+            });
+        });
+      }
+
+      flyTo(centerX, centerY, zoomLevel, true);
+    }
+
+    function getFeatureInfoUrl(latlng, map) {
+      const point = map.latLngToContainerPoint(latlng, map.getZoom());
+      const size = map.getSize();
+      const bounds = map.getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+      const crs = map.options.crs;
+      const sw_3857 = crs.project(sw);
+      const ne_3857 = crs.project(ne);
+
+      const bbox = [sw_3857.x, sw_3857.y, ne_3857.x, ne_3857.y].join(',');
+
+      const params = {
+        service: 'WMS',
+        version: '1.3.0',
+        request: 'GetFeatureInfo',
+        layers: 'ch.bfs.gebaeude_wohnungs_register',
+        query_layers: 'ch.bfs.gebaeude_wohnungs_register',
+        bbox: bbox,
+        width: size.x,
+        height: size.y,
+        info_format: 'application/json',
+        i: Math.round(point.x),
+        j: Math.round(point.y),
+        crs: 'EPSG:3857',
+      };
+
+      const queryString = new URLSearchParams(params).toString();
+      return `https://wms.geo.admin.ch/?${queryString}`;
+    }
+
+    // New function to fetch and parse extendedHtmlPopup data
+    function getInfoFromPopup(id) {
+      const url = `https://api3.geo.admin.ch/rest/services/ech/MapServer/ch.bfs.gebaeude_wohnungs_register/${id}/extendedHtmlPopup?lang=it`;
+
+      return fetch(url)
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const rows = doc.querySelectorAll("tr");
+
+          const info = {
+            numeroAbitazioni: null,
+            statoPubblicazione: null,
+            numeroFondo: null,
+            statoEdificio: null,
+            categoriaEdificio: null
+          };
+
+          for (let row of rows) {
+            const text = row.textContent.trim();
+
+            if (text.includes("Quantità delle registrazioni di abitazioni")) {
+              const cells = row.querySelectorAll("td");
+              if (cells.length >= 2) {
+                info.numeroAbitazioni = cells[1].textContent.trim();
+              }
+            } else if (text.includes("Numero del fondo")) {
+              const cells = row.querySelectorAll("td");
+              if (cells.length >= 2) {
+                info.numeroFondo = cells[1].textContent.trim();
+              }
+            } else if (text.includes("Stato dell'edificio")) {
+              const cells = row.querySelectorAll("td");
+              if (cells.length >= 2) {
+                info.statoEdificio = cells[1].textContent.trim();
+              }
+            } else if (text.includes("Categoria di edificio")) {
+              const cells = row.querySelectorAll("td");
+              if (cells.length >= 2) {
+                info.categoriaEdificio = cells[1].textContent.trim();
+              }
+            }
+          }
+          return info;
+        })
+        .catch(err => {
+          console.error("Errore durante la richiesta informazioni:", err);
+          return null;
+        });
+    }
+
+    // Load map with default center and zoom
+    loadMap(46.191355, 9.013880, 18);
+
+    function openGoogleMaps(lat, lng) {
+      if (mapInstance) {
+        const zoom = mapInstance.getZoom();
+        const googleLink = `https://www.google.com/maps/@${lat},${lng},${zoom}z/data=!5m1!1e3`;
+        window.open(googleLink, '_blank');
+      }
+    }
+    mapInstance.on('zoomend', function () {
+      const zoom = mapInstance.getZoom();
+      console.log("zoom level: " + zoom)
+      if (zoom < 18) {
+        if (mapInstance.hasLayer(constructionLayer)) {
+          mapInstance.removeLayer(constructionLayer);
+        }
+      } else {
+        if (!mapInstance.hasLayer(constructionLayer)) {
+          mapInstance.addLayer(constructionLayer);
+        }
+      }
+    });
+
+  </script>
+</body>
+
+</html>
