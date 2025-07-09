@@ -9,6 +9,17 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <style>
+    *::-webkit-scrollbar {
+        width: 0.4rem;
+        background-color: transparent;
+        margin-left: -100%;
+    }
+    *::-webkit-scrollbar-thumb {
+        border-radius: 100vh;
+        background-color: #8b8b8b;
+        background-color: black;
+        border: 0.05rem solid white;
+    }
     body{
       margin: 0;
     }
@@ -18,25 +29,55 @@
     }
 
     table {
-      border-collapse: collapse;
+      cursor: pointer;
+      border-collapse: separate;
+      border-spacing: 0;
       width: 100%;
       font-family: Arial, sans-serif;
       font-size: 12px;
+      text-align: start;
     }
 
     table td {
-      padding: 4px 8px;
-      border: 1px solid #ccc;
+      padding: 4px 25px;
     }
 
+    /* Default row background */
+    table tr {
+      background-color: rgba(242, 242, 242, 0.9);
+    }
+
+    table tr td:nth-child(odd){
+      font-weight: bold;
+      border-right: 1.5px solid black;
+    }
+
+    /* Even rows darker */
     table tr:nth-child(even) {
-      background-color: #f2f2f2;
+      background-color: rgba(211, 211, 211, 0.9);
     }
 
+    /* Hover effect for all rows */
     table tr:hover {
-      background-color: #ddd;
+      background-color: rgba(200, 200, 200, 0.9);
     }
 
+    table tr:nth-child(even):hover {
+      background-color: rgba(169, 169, 169, 0.9);
+    }
+
+    /* Special style for top-right cell */
+    table tr:first-child td:last-child {
+      border: none;
+      font-size: 16px;
+      text-align: center;
+      border-bottom: 1.5px solid black;
+    }
+    table tr:first-child td:last-child:hover {
+      background-color: rgba(242, 242, 242, 0.9);
+    }
+
+    /* Link styling */
     table a {
       color: #007bff;
       text-decoration: none;
@@ -45,6 +86,38 @@
     table a:hover {
       text-decoration: underline;
     }
+
+    .leaflet-popup{
+      background-color: transparent;
+    }
+    .leaflet-popup-content-wrapper {
+      box-shadow: none;
+      background-color: transparent;
+      padding: 0 0;
+      max-height: 30vh;
+      overflow-y: auto !important;
+      box-shadow: 0 8px 80px 15px rgba(0,0,0,0.6);
+    }
+    .leaflet-popup-content {
+      text-align: center;
+      padding: 0;
+      margin: 0;
+      border-radius: 25px;
+      color: black;
+    }
+    .leaflet-popup-close-button{
+      display: none;
+    }
+    .leaflet-popup-content div{
+      padding: 1ch;
+    }
+    .leaflet-popup-tip, .leaflet-popup-content div{
+      overflow: hidden;
+      background-color: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
   </style>
 </head>
 
@@ -173,7 +246,7 @@
 
         markers.forEach(markerData => {
           const marker = L.marker([markerData.x, markerData.y], { icon: defaultIcon });
-          marker.bindPopup(`<strong>${markerData.description}</strong>`);
+          marker.bindPopup(`<div><strong>${markerData.description}</strong></div>`);
           markerClusterGroup.addLayer(marker);
           markerData.leafletMarker = marker;
 
@@ -181,13 +254,7 @@
           let lastTap = 0;
 
           marker.on('click', () => {
-            const now = Date.now();
-            console.log(now)
-            if (now - lastTap < 200) {
-              // Treat as double-tap
               flyTo(markerData.x, markerData.y, 18, false);
-            }
-            lastTap = now;
           });
         });
 
@@ -213,8 +280,8 @@
                     dataPubblicazione = `${d}.${m}.${y}`;
                   }
                   const content = `
-                  <strong>Informazione oggetto</strong><br>
                   <table>
+                    <tr><td colspan="2"><bold>Informazioni Edificio</bold></td></tr>
                     <tr><td>Identificatore federale edificio (EGID)</td><td>${props.egid ?? 'N/A'}</td></tr>
                     <tr><td>Via</td><td>${props.strname_deinr ?? 'N/A'}</td></tr>
                     <tr><td>NPA/NPA6</td><td>${props.plz_plz6 ?? 'N/A'}</td></tr>
