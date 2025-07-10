@@ -11,12 +11,10 @@
   <style>
     *::-webkit-scrollbar {
         width: 0.4rem;
-        background-color: transparent;
         margin-left: -100%;
     }
     *::-webkit-scrollbar-thumb {
         border-radius: 100vh;
-        background-color: #8b8b8b;
         background-color: black;
         border: 0.05rem solid white;
     }
@@ -94,29 +92,47 @@
       box-shadow: none;
       background-color: transparent;
       padding: 0 0;
-      max-height: 30vh;
-      overflow-y: auto !important;
-      box-shadow: 0 8px 80px 15px rgba(0,0,0,0.6);
     }
     .leaflet-popup-content {
       text-align: center;
-      padding: 0;
+      padding: 0 !important;
       margin: 0;
-      border-radius: 25px;
       color: black;
+      border-radius: 25px !important;
+      overflow: hidden !important;
+      box-shadow: 0 8px 80px 15px rgba(0,0,0,0.6);
+
     }
     .leaflet-popup-close-button{
       display: none;
     }
-    .leaflet-popup-content div{
-      padding: 1ch;
-    }
     .leaflet-popup-tip, .leaflet-popup-content div{
-      overflow: hidden;
-      background-color: rgba(255, 255, 255, 0.6)!important;
+      background-color: rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
+    .leaflet-popup-content div{
+      max-height: 30vh;
+      overflow-y: auto !important;    
+      padding: 1ch; 
+    }
+    .leaflet-popup-tip-container{
+      margin-top: 0;
+    }
+    .leaflet-popup-tip {
+      border-radius: 2px;
+      margin: -11px auto 0;
+      position: relative;
+      overflow: visible;
+      z-index: 2;
+      background: rgba(250, 250, 250, 0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px); /* Safari support */
+    }
+    .mapScrollDiv{
+      padding: 0 !important;
+    }
+    
 
   </style>
 </head>
@@ -280,6 +296,7 @@
                     dataPubblicazione = `${d}.${m}.${y}`;
                   }
                   const content = `
+                  <div class="mapScrollDiv">
                   <table>
                     <tr><td colspan="2"><bold>Informazioni Edificio</bold></td></tr>
                     <tr><td>Identificatore federale edificio (EGID)</td><td>${props.egid ?? 'N/A'}</td></tr>
@@ -295,6 +312,7 @@
                     <tr><td>Numero di abitazioni</td><td>${info?.numeroAbitazioni ?? 'N/A'}</td></tr>
                     <tr><td><a href="${link}" target="_blank">Informazioni supplementari</a></td><td><a href="#" onclick="openGoogleMaps(${e.latlng.lat}, ${e.latlng.lng}); return false;">Vedi su Google Maps</a></td></tr>
                   </table>
+                  </div>
                   `;
                   L.popup()
                     .setLatLng(e.latlng)
