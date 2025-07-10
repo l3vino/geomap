@@ -211,7 +211,7 @@
         durationSeconds = Math.min(durationSeconds, 6);
 
         // Remove construction layer before flyTo
-        if (constructionLayer && currentZoom>18) {
+        if (constructionLayer && currentZoom<18) {
           mapInstance.removeLayer(constructionLayer);
         }
         if(currentZoom > 17 && zoom > 17){
