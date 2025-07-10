@@ -42,7 +42,7 @@
 
     /* Default row background */
     table tr {
-      background-color: rgba(242, 242, 242, 0.9);
+      background-color: rgba(242, 242, 242, 0.4);
     }
 
     table tr td:nth-child(odd){
@@ -52,16 +52,16 @@
 
     /* Even rows darker */
     table tr:nth-child(even) {
-      background-color: rgba(211, 211, 211, 0.9);
+      background-color: rgba(211, 211, 211, 0.4);
     }
 
     /* Hover effect for all rows */
     table tr:hover {
-      background-color: rgba(200, 200, 200, 0.9);
+      background-color: rgba(200, 200, 200, 0.4);
     }
 
     table tr:nth-child(even):hover {
-      background-color: rgba(169, 169, 169, 0.9);
+      background-color: rgba(169, 169, 169, 0.4);
     }
 
     /* Special style for top-right cell */
@@ -72,7 +72,7 @@
       border-bottom: 1.5px solid black;
     }
     table tr:first-child td:last-child:hover {
-      background-color: rgba(242, 242, 242, 0.9);
+      background-color: rgba(242, 242, 242, 0.4);
     }
 
     /* Link styling */
@@ -100,8 +100,7 @@
       color: black;
       border-radius: 25px !important;
       overflow: hidden !important;
-      box-shadow: 0 8px 80px 15px rgba(0,0,0,0.6);
-
+      box-shadow: 0 6px 80px 15px rgba(0,0,0,0.6);
     }
     .leaflet-popup-close-button{
       display: none;
@@ -132,8 +131,6 @@
     .mapScrollDiv{
       padding: 0 !important;
     }
-    
-
   </style>
 </head>
 
@@ -180,9 +177,8 @@
         const currentCenter = mapInstance.getCenter();
         const currentZoom = mapInstance.getZoom();
 
-        const earthRadiusKm = 6371;
-
-        function haversineDistance(lat1, lon1, lat2, lon2) {
+        const toMeters = (lat1, lon1, lat2, lon2) => {
+          const R = 6371000; // Earth's radius in meters
           const toRad = deg => deg * Math.PI / 180;
           const dLat = toRad(lat2 - lat1);
           const dLon = toRad(lon2 - lon1);
@@ -192,27 +188,38 @@
             Math.sin(dLon / 2) ** 2;
           const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-          return earthRadiusKm * c;
+          return R * c;
+        };
+
+        const distanceMeters = toMeters(currentCenter.lat, currentCenter.lng, x, y);
+
+        // Duration based on piecewise interpolation
+        let durationSeconds;
+        if (distanceMeters <= 10) {
+          durationSeconds = 0.25;
+        } else if (distanceMeters <= 100) {
+          durationSeconds = 0.75;
+        } else if (distanceMeters <= 500) {
+          durationSeconds = 1.25;
+        } else if (distanceMeters <= 1000) {
+          durationSeconds = 1.75;
+        } else {
+          durationSeconds = 1.75 + (distanceMeters / 1000) * 0.25;
         }
 
-        const distance2D = haversineDistance(currentCenter.lat, currentCenter.lng, x, y);
-        const zoomScaleKm = 500;
-        const zoomDiffKm = Math.abs(currentZoom - zoom) * zoomScaleKm;
+        // Clamp max duration if desired
+        durationSeconds = Math.min(durationSeconds, 6);
 
-        const totalDistanceKm = Math.sqrt(distance2D ** 2 + zoomDiffKm ** 2);
-
-        const speedKmH = 10000;
-        const durationHours = totalDistanceKm / speedKmH;
-        const durationSeconds = Math.min(Math.max(durationHours * 3600, 1.5), 4.5);
-
-        // Disable construction layer before flyTo
-        if (constructionLayer) {
+        // Remove construction layer before flyTo
+        if (constructionLayer && currentZoom>18) {
           mapInstance.removeLayer(constructionLayer);
+        }
+        if(currentZoom > 17 && zoom > 17){
+          zoom = currentZoom
         }
 
         mapInstance.flyTo([x, y], zoom, { duration: durationSeconds });
 
-        // Re-enable construction layer after fly animation ends
         function onMoveEnd() {
           if (constructionLayer) {
             constructionLayer.addTo(mapInstance);
@@ -221,10 +228,8 @@
         }
         mapInstance.on('moveend', onMoveEnd);
 
-        // Highlight marker only if functionCalled === true
         if (functionCalled) {
           const markerToHighlight = markers.find(m => m.x === x && m.y === y);
-
           if (markerToHighlight) {
             if (highlightedMarker) {
               highlightedMarker.setIcon(defaultIcon);
@@ -236,10 +241,10 @@
       }
     }
 
+
     function loadMap(centerX, centerY, zoomLevel) {
       if (mapInstance === null) {
-        mapInstance = L.map('map', { zoomControl: false, doubleClickZoom: false }).setView([46.191355, 9.013880], 1);
-
+        mapInstance = L.map('map', { zoomControl: false, doubleClickZoom: false }).setView([46.191355, 9.013880], 13);
         L.tileLayer(
           'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg',
           {
@@ -299,17 +304,16 @@
                   <div class="mapScrollDiv">
                   <table>
                     <tr><td colspan="2"><bold>Informazioni Edificio</bold></td></tr>
-                    <tr><td>Identificatore federale edificio (EGID)</td><td>${props.egid ?? 'N/A'}</td></tr>
                     <tr><td>Via</td><td>${props.strname_deinr ?? 'N/A'}</td></tr>
-                    <tr><td>NPA/NPA6</td><td>${props.plz_plz6 ?? 'N/A'}</td></tr>
                     <tr><td>Località</td><td>${props.dplzname ?? 'N/A'}</td></tr>
                     <tr><td>Nome Comune</td><td>${props.ggdename ?? 'N/A'}</td></tr>
-                    <tr><td>Numero UST Comune</td><td>${props.ggdenr ?? 'N/A'}</td></tr>
-                    <tr><td>Data pubblicazione</td><td>${dataPubblicazione}</td></tr>
-                    <tr><td>Numero del fondo</td><td>${info?.numeroFondo ?? 'N/A'}</td></tr>
-                    <tr><td>Stato dell'edificio</td><td>${info?.statoEdificio ?? 'N/A'}</td></tr>
+                    <tr><td>NPA/NPA6</td><td>${props.plz_plz6 ?? 'N/A'}</td></tr>      
                     <tr><td>Categoria di edificio</td><td>${info?.categoriaEdificio ?? 'N/A'}</td></tr>
                     <tr><td>Numero di abitazioni</td><td>${info?.numeroAbitazioni ?? 'N/A'}</td></tr>
+                    <tr><td>Stato dell'edificio</td><td>${info?.statoEdificio ?? 'N/A'}</td></tr>
+                    <tr><td>Identificatore federale edificio (EGID)</td><td>${props.egid ?? 'N/A'}</td></tr>
+                    <tr><td>Numero UST Comune</td><td>${props.ggdenr ?? 'N/A'}</td></tr>
+                    <tr><td>Data pubblicazione</td><td>${dataPubblicazione}</td></tr>
                     <tr><td><a href="${link}" target="_blank">Informazioni supplementari</a></td><td><a href="#" onclick="openGoogleMaps(${e.latlng.lat}, ${e.latlng.lng}); return false;">Vedi su Google Maps</a></td></tr>
                   </table>
                   </div>
@@ -325,6 +329,7 @@
               console.error(error);
             });
         });
+        flyTo(46.191355, 9.013880, 18, false);
       }
 
       flyTo(centerX, centerY, zoomLevel, true);
