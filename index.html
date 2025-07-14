@@ -16,7 +16,6 @@
     *::-webkit-scrollbar-thumb {
         border-radius: 100vh;
         background-color: black;
-        border: 0.05rem solid white;
     }
     body{
       margin: 0;
@@ -148,6 +147,10 @@
       { x:46.191355, y:9.013880, description: "business center"}
       // Add more markers if needed
     ];
+    for (let i = 0; i < 5000; i++) {
+      markers.push({x: 46.191355+i*0.0001, y: 9.013880+i*0.0001, description: i})
+      
+    }
 
     let mapInstance = null;
     let markerClusterGroup = null;
@@ -176,7 +179,6 @@
       if (mapInstance) {
         const currentCenter = mapInstance.getCenter();
         const currentZoom = mapInstance.getZoom();
-
         const toMeters = (lat1, lon1, lat2, lon2) => {
           const R = 6371000; // Earth's radius in meters
           const toRad = deg => deg * Math.PI / 180;
@@ -192,6 +194,10 @@
         };
 
         const distanceMeters = toMeters(currentCenter.lat, currentCenter.lng, x, y);
+
+        if(distanceMeters < 0.1 && currentZoom == zoom){
+          return
+        }
 
         // Duration based on piecewise interpolation
         let durationSeconds;
@@ -217,11 +223,11 @@
         if(currentZoom > 17 && zoom > 17){
           zoom = currentZoom
         }
-
-        mapInstance.flyTo([x, y], zoom, { duration: durationSeconds });
+  
+        mapInstance.flyTo([x, y], zoom, { duration: durationSeconds });      
 
         function onMoveEnd() {
-          if (constructionLayer) {
+          if (constructionLayer && mapInstance.getZoom()>17) {
             constructionLayer.addTo(mapInstance);
           }
           mapInstance.off('moveend', onMoveEnd);
@@ -262,8 +268,35 @@
           version: '1.3.0',
         }).addTo(mapInstance);
 
-        markerClusterGroup = L.markerClusterGroup();
+        markerClusterGroup = L.markerClusterGroup({
+          disableClusteringAtZoom: 15,
+        });
+
         mapInstance.addLayer(markerClusterGroup);
+
+        markerClusterGroup.on('clusterclick', function (a) {
+          // Prevent default behavior (including spiderfy)
+          a.originalEvent.preventDefault();
+          a.originalEvent.stopPropagation();
+
+          // Get all markers in this cluster
+          const markers = a.layer.getAllChildMarkers();
+          if (markers.length === 0) return;
+
+          // Calculate bounds of all markers in the cluster
+          const bounds = L.latLngBounds(markers.map(m => m.getLatLng()));
+
+          // Calculate the center of the bounds
+          const center = bounds.getCenter();
+
+          // Calculate zoom level to fit the bounds
+          const zoom = mapInstance.getBoundsZoom(bounds, false);
+
+          // Animate to center and zoom using your flyTo function
+          flyTo(center.lat, center.lng, zoom, false);
+        });
+
+
 
         markers.forEach(markerData => {
           const marker = L.marker([markerData.x, markerData.y], { icon: defaultIcon });
