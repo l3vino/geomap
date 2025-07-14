@@ -141,16 +141,41 @@
 
   <script>
     const markers = [
-      { x: 46.1711, y: 8.7932, description: 'Edificio 1' },
-      { x: 46.175, y: 8.8, description: 'Edificio 2' },
-      { x: 46.18, y: 8.79, description: 'Edificio 3' },
+      { x: 47.3769, y: 8.5417, description: 'Zürich (largest city)' },
+      { x: 46.9489, y: 7.4474, description: 'Bern (capital)' },
+      { x: 46.2044, y: 6.1432, description: 'Genève (Geneva)' },
+      { x: 46.5199, y: 6.6336, description: 'Lausanne' },
+      { x: 47.5596, y: 7.5886, description: 'Basel' },
+      { x: 46.0037, y: 8.9511, description: 'Lugano' },
+      { x: 47.0502, y: 8.3093, description: 'Luzern (Lucerne)' },
+      { x: 47.5000, y: 8.7376, description: 'Winterthur' },
+      { x: 47.1662, y: 8.5155, description: 'Zug' },
+      { x: 47.1456, y: 9.3504, description: 'St. Gallen' },
+      { x: 46.9899, y: 6.9293, description: 'Neuchâtel' },
+      { x: 46.7785, y: 6.6412, description: 'Yverdon-les-Bains' },
+      { x: 46.1711, y: 8.7932, description: 'Locarno' },
+      { x: 46.2200, y: 6.1436, description: 'Carouge' },
+      { x: 47.3833, y: 8.4667, description: 'Dietikon' },
+      { x: 47.3703, y: 8.8656, description: 'Widen' },
+      { x: 47.2266, y: 8.8184, description: 'Rapperswil-Jona' },
+      { x: 47.4754, y: 8.3064, description: 'Baden (AG)' },
+      { x: 46.8021, y: 9.8335, description: 'Davos' },
+      { x: 46.6833, y: 7.8500, description: 'Interlaken' },
+      { x: 46.5999, y: 7.9000, description: 'Lauterbrunnen' },
+      { x: 47.3314, y: 9.4086, description: 'Appenzell' },
+      { x: 47.4791, y: 9.4916, description: 'Rorschach' },
+      { x: 47.4527, y: 8.5852, description: 'Kloten' },
+      { x: 47.5000, y: 7.5400, description: 'Solothurn' },
+      { x: 46.7468, y: 6.9122, description: 'Villarzel (VD)' },
+      { x: 47.0411, y: 9.0679, description: 'Glarus' },
+      { x: 46.9100, y: 9.4428, description: 'Vättis' },
+      { x: 47.2946, y: 7.9500, description: 'Zofingen' },
+      { x: 46.6220, y: 7.0400, description: 'Bulle' },
+
       { x:46.191355, y:9.013880, description: "business center"}
       // Add more markers if needed
     ];
-    for (let i = 0; i < 5001; i++) {
-      markers.push({x: 46.191355+i*0.001, y: 9.013880+i*0.001, description: i})
-      
-    }
+
 
     let mapInstance = null;
     let markerClusterGroup = null;
@@ -179,18 +204,12 @@
       if (mapInstance) {
         const currentCenter = mapInstance.getCenter();
         const currentZoom = mapInstance.getZoom();
+        console.log("currentCenter: "+currentCenter)
+        console.log("currentZoom: "+currentZoom)
+        console.log("finalCenter: {x: " +x+". y: "+y+"}")
+        console.log("finalZoom: "+currentZoom)
         const toMeters = (lat1, lon1, lat2, lon2) => {
-          const R = 6371000; // Earth's radius in meters
-          const toRad = deg => deg * Math.PI / 180;
-          const dLat = toRad(lat2 - lat1);
-          const dLon = toRad(lon2 - lon1);
-
-          const a = Math.sin(dLat / 2) ** 2 +
-            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) ** 2;
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-          return R * c;
+          Math.sqrt((Math.abs(lat1-lat2)**2)+(Math.abs(lon1-lon2)**2))
         };
 
         const distanceMeters = toMeters(currentCenter.lat, currentCenter.lng, x, y);
@@ -214,7 +233,7 @@
         }
 
         // Clamp max duration if desired
-        durationSeconds = Math.min(durationSeconds, 6);
+        durationSeconds = Math.min(durationSeconds + (Math.abs(currentZoom - zoom)*0.2), 6);
 
         // Remove construction layer before flyTo
         if (constructionLayer && currentZoom<18) {
@@ -268,33 +287,29 @@
           version: '1.3.0',
         }).addTo(mapInstance);
 
-        markerClusterGroup = L.markerClusterGroup({
+        const markerClusterGroup = L.markerClusterGroup({
           disableClusteringAtZoom: 15,
+          zoomToBoundsOnClick: false, // Disables auto-zoom on cluster click
+          spiderfyOnMaxZoom: false,   // Optional: disables spiderfying behavior
         });
 
         mapInstance.addLayer(markerClusterGroup);
 
         markerClusterGroup.on('clusterclick', function (a) {
-          // Prevent default behavior (including spiderfy)
-          a.originalEvent.preventDefault();
-          a.originalEvent.stopPropagation();
-
-          // Get all markers in this cluster
           const markers = a.layer.getAllChildMarkers();
           if (markers.length === 0) return;
 
-          // Calculate bounds of all markers in the cluster
+          // This is already a LatLngBounds object
           const bounds = L.latLngBounds(markers.map(m => m.getLatLng()));
+          console.log('Cluster bounds:', bounds);
 
-          // Calculate the center of the bounds
-          const center = bounds.getCenter();
-
-          // Calculate zoom level to fit the bounds
-          const zoom = mapInstance.getBoundsZoom(bounds, false);
-
-          // Animate to center and zoom using your flyTo function
-          flyTo(center.lat, center.lng, zoom, false);
+          // Get zoom level to fit the cluster bounds
+          const zoomLevel = mapInstance.getBoundsZoom(bounds);
+          console.log('Zoom level to fit bounds:', zoomLevel);
+          flyTo((bounds._northEast.lat+bounds._southWest.lat)/2, (bounds._northEast.lng+bounds._southWest.lng)/2, zoomLevel, false)
         });
+
+
 
 
 
