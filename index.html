@@ -334,7 +334,12 @@
           console.log('Cluster bounds:', bounds);
 
           // Get zoom level to fit the cluster bounds
-          const zoomLevel = mapInstance.getBoundsZoom(bounds)-1;
+          let zoomLevel = mapInstance.getBoundsZoom(bounds);
+          console.error("zoomLevel: "+zoomLevel)
+          console.error("currentZoom: "+mapInstance.getZoom())
+          if(mapInstance.getZoom()>= zoomLevel-1){
+            zoomLevel-=1
+          }
           console.log('Zoom level to fit bounds:', zoomLevel);
           flyTo((bounds._northEast.lat+bounds._southWest.lat)/2, (bounds._northEast.lng+bounds._southWest.lng)/2, zoomLevel, false)
         });
