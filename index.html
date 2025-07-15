@@ -326,7 +326,6 @@
         mapInstance.addLayer(markerClusterGroup);
 
         markerClusterGroup.on('clusterclick', function (a) {
-          markerClusterGroup.fire('clusterclick', a); // Manually delegate
           const markers = a.layer.getAllChildMarkers();
           if (markers.length === 0) return;
 
