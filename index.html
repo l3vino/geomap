@@ -337,7 +337,7 @@
           let zoomLevel = mapInstance.getBoundsZoom(bounds);
           console.error("zoomLevel: "+zoomLevel)
           console.error("currentZoom: "+mapInstance.getZoom())
-          if(mapInstance.getZoom()>= zoomLevel-1){
+          if(zoomLevel-1>mapInstance.getZoom()){
             zoomLevel-=1
           }
           console.log('Zoom level to fit bounds:', zoomLevel);
