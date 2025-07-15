@@ -141,36 +141,56 @@
 
   <script>
     const markers = [
-      { x: 47.3769, y: 8.5417, description: 'Zürich (largest city)' },
-      { x: 46.9489, y: 7.4474, description: 'Bern (capital)' },
-      { x: 46.2044, y: 6.1432, description: 'Genève (Geneva)' },
-      { x: 46.5199, y: 6.6336, description: 'Lausanne' },
-      { x: 47.5596, y: 7.5886, description: 'Basel' },
-      { x: 46.0037, y: 8.9511, description: 'Lugano' },
-      { x: 47.0502, y: 8.3093, description: 'Luzern (Lucerne)' },
-      { x: 47.5000, y: 8.7376, description: 'Winterthur' },
-      { x: 47.1662, y: 8.5155, description: 'Zug' },
-      { x: 47.1456, y: 9.3504, description: 'St. Gallen' },
-      { x: 46.9899, y: 6.9293, description: 'Neuchâtel' },
-      { x: 46.7785, y: 6.6412, description: 'Yverdon-les-Bains' },
-      { x: 46.1711, y: 8.7932, description: 'Locarno' },
-      { x: 46.2200, y: 6.1436, description: 'Carouge' },
-      { x: 47.3833, y: 8.4667, description: 'Dietikon' },
-      { x: 47.3703, y: 8.8656, description: 'Widen' },
-      { x: 47.2266, y: 8.8184, description: 'Rapperswil-Jona' },
-      { x: 47.4754, y: 8.3064, description: 'Baden (AG)' },
-      { x: 46.8021, y: 9.8335, description: 'Davos' },
-      { x: 46.6833, y: 7.8500, description: 'Interlaken' },
-      { x: 46.5999, y: 7.9000, description: 'Lauterbrunnen' },
-      { x: 47.3314, y: 9.4086, description: 'Appenzell' },
-      { x: 47.4791, y: 9.4916, description: 'Rorschach' },
-      { x: 47.4527, y: 8.5852, description: 'Kloten' },
-      { x: 47.5000, y: 7.5400, description: 'Solothurn' },
-      { x: 46.7468, y: 6.9122, description: 'Villarzel (VD)' },
-      { x: 47.0411, y: 9.0679, description: 'Glarus' },
-      { x: 46.9100, y: 9.4428, description: 'Vättis' },
-      { x: 47.2946, y: 7.9500, description: 'Zofingen' },
-      { x: 46.6220, y: 7.0400, description: 'Bulle' },
+      { x: 46.204391, y: 6.143158, description: "Geneva, Switzerland" },
+      { x: 46.003677, y: 8.951052, description: "Lugano, Switzerland" },
+      { x: 47.451542, y: 8.564572, description: "Zurich Airport (ZRH), Switzerland" },
+      { x: 47.559601, y: 7.588576, description: "Basel, Switzerland" },
+      { x: 47.373878, y: 8.545094, description: "Predigerkirche, Zürich, Switzerland" },
+      { x: 46.519962, y: 6.633597, description: "Lausanne, Switzerland" },
+      { x: 45.980537, y: 7.641618, description: "Matterhorn, Switzerland" },
+      { x: 46.947456, y: 7.451123, description: "Münster of Bern, Bern, Switzerland" },
+      { x: 46.802128, y: 9.833477, description: "Davos, Switzerland" },
+      { x: 47.166168, y: 8.515495, description: "Zug, Switzerland" },
+      { x: 47.499950, y: 8.737565, description: "Winterthur, Switzerland" },
+      { x: 46.433334, y: 6.550000, description: "Lake Geneva, Switzerland" },
+      { x: 46.683334, y: 7.850000, description: "Interlaken, Bern, Switzerland" },
+      { x: 46.599998, y: 7.900000, description: "Lauterbrunnen, Bern, Switzerland" },
+      { x: 47.475361, y: 8.306372, description: "Baden, Switzerland" },
+      { x: 46.536900, y: 6.584780, description: "Renens, Switzerland" },
+      { x: 46.210281, y: 6.151083, description: "Grand Hotel Kempinski, Genève, Switzerland" },
+      { x: 47.142071, y: 8.432456, description: "Risch-Rotkreuz, Switzerland" },
+      { x: 46.431221, y: 6.910680, description: "Montreux, Switzerland" },
+      { x: 47.452663, y: 8.585241, description: "Kloten, Switzerland" },
+      { x: 46.316666, y: 8.816667, description: "Ticino, Switzerland" },
+      { x: 47.479073, y: 9.491640, description: "Rorschach, Switzerland" },
+      { x: 46.536804, y: 7.962639, description: "Jungfrau Region, Switzerland" },
+      { x: 46.478176, y: 6.238849, description: "Le Vaud, Vaud, Switzerland" },
+      { x: 47.331417, y: 9.408623, description: "Appenzell, Switzerland" },
+      { x: 45.923363, y: 8.916714, description: "Morcote, Switzerland" },
+      { x: 46.002205, y: 8.862772, description: "Curio, Lugano, Switzerland" },
+      { x: 47.654846, y: 8.956584, description: "Schloss Glarisegg, Steckborn, Switzerland" },
+      { x: 46.522442, y: 6.635310, description: "Place de la Cathédrale, Lausanne, Suisse, Switzerland" },
+      { x: 47.226624, y: 8.818437, description: "Rapperswil-Jona, Switzerland" },
+      { x: 46.721306, y: 9.445805, description: "Schloss Schauenstein, Fürstenau, Switzerland" },
+      { x: 46.806126, y: 7.163215, description: "Fribourg Cathedral, Fribourg, Switzerland" },
+      { x: 46.802502, y: 8.163333, description: "Lake Lungern, Obwalden, Switzerland" },
+      { x: 47.240688, y: 8.922050, description: "Eschenbach, Switzerland" },
+      { x: 46.210014, y: 7.256719, description: "Ardon, Switzerland" },
+      { x: 47.449406, y: 8.327495, description: "Neuenhof, Aargau, Switzerland" },
+      { x: 46.885391, y: 9.856625, description: "Sunniberg Bridge, Switzerland" },
+      { x: 47.454033, y: 8.278206, description: "Kantonsspital, Baden, Switzerland" },
+      { x: 47.500954, y: 8.729869, description: "Winterthur, Switzerland" },
+      { x: 46.562000, y: 8.339000, description: "Furka and Grimsel Pass, Switzerland" },
+      { x: 46.532501, y: 7.664722, description: "Lake Blausee, Bernese Oberland, Switzerland" },
+      { x: 46.702225, y: 7.809477, description: "Ula's Holiday Apartments, Switzerland" },
+      { x: 47.363071, y: 8.495555, description: "Soul Street Zurich, Switzerland" },
+      { x: 46.950001, y: 8.350000, description: "Stans, Nidwald, Switzerland" },
+      { x: 47.571758, y: 7.687056, description: "Swisscom-Sendeturm St. Chrischona, Bettingen, Switzerland" },
+      { x: 46.836636, y: 9.284692, description: "Flims, Graubunden, Switzerland" },
+      { x: 46.488998, y: 6.806459, description: "Mont Pèlerin TV Tower, Mont Pèlerin, Chardonne, Switzerland" },
+      { x: 46.977798, y: 7.528580, description: "Bantiger TV Tower, Bolligen, Switzerland" },
+      { x: 46.778877, y: 9.150267, description: "Rueun, Switzerland" },
+      { x: 46.083370, y: 6.976880, description: "Finhaut, Martigny, Switzerland" },
 
       { x:46.191355, y:9.013880, description: "business center"}
       // Add more markers if needed
@@ -269,7 +289,7 @@
 
     function loadMap(centerX, centerY, zoomLevel) {
       if (mapInstance === null) {
-        mapInstance = L.map('map', { zoomControl: false, doubleClickZoom: false }).setView([46.191355, 9.013880], 13);
+        mapInstance = L.map('map', { zoomControl: false, doubleClickZoom: false }).setView([46.191355, 9.013880], 4);
         L.tileLayer(
           'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg',
           {
@@ -304,7 +324,7 @@
           console.log('Cluster bounds:', bounds);
 
           // Get zoom level to fit the cluster bounds
-          const zoomLevel = mapInstance.getBoundsZoom(bounds);
+          const zoomLevel = mapInstance.getBoundsZoom(bounds)-1;
           console.log('Zoom level to fit bounds:', zoomLevel);
           flyTo((bounds._northEast.lat+bounds._southWest.lat)/2, (bounds._northEast.lng+bounds._southWest.lng)/2, zoomLevel, false)
         });
